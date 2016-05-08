@@ -1,8 +1,8 @@
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.thrift.TException;
@@ -20,7 +20,12 @@ public class ServerHandler implements Iface {
 	@Override
 	public KeyValue get(long key) throws TException {
 		// TODO Auto-generated method stub
-		return null;
+		KeyValue k;
+		if((k = valores.get(key)) == null){
+			k = new KeyValue();
+			k.version = -1;
+		}
+		return k;
 	}
 
 	// Retorna uma lista com todas as chaves entre keyBegin e keyEnd, inclusive.
@@ -28,7 +33,11 @@ public class ServerHandler implements Iface {
 	@Override
 	public List<KeyValue> getRange(long keyBegin, long keyEnd) throws TException {
 		// TODO Auto-generated method stub
-		return null;
+		ArrayList<KeyValue> lista  = new ArrayList<>();
+		for (long i = keyBegin; i < keyEnd; i++) {
+			lista.add(valores.get(i));
+		}
+		return lista;
 	}
 
 	// Caso a chave não exista no banco, insere par com version_t = 0 e retorna
@@ -37,7 +46,7 @@ public class ServerHandler implements Iface {
 	@Override
 	public int put(long key, ByteBuffer value) throws ValueIsTooLongException, TException {
 		// TODO Auto-generated method stub
-		System.out.print(key + " entrou aqui: ");
+		
 		KeyValue k;
 		if ((k = valores.get(key)) != null) {
 			k.setVersion(k.getVersion() + 1);
@@ -59,7 +68,14 @@ public class ServerHandler implements Iface {
 	@Override
 	public int update(long key, ByteBuffer value) throws ValueIsTooLongException, TException {
 		// TODO Auto-generated method stub
-		return 0;
+		KeyValue k;
+		if((k = valores.get(key))!= null){
+			k.value = value;
+			k.version++;
+		}else{
+			return -1;
+		}
+		return k.version;
 	}
 
 	// Caso a chave exista no banco, com a chave igual ao parâmetro version,
@@ -68,6 +84,7 @@ public class ServerHandler implements Iface {
 	@Override
 	public int updateWithVersion(long key, ByteBuffer value, int version) throws ValueIsTooLongException, TException {
 		// TODO Auto-generated method stub
+		
 		return 0;
 	}
 
@@ -77,12 +94,22 @@ public class ServerHandler implements Iface {
 	public KeyValue remove(long key) throws TException {
 		// TODO Auto-generated method stub
 		
+		
+		
+		for (Map.Entry<Long, KeyValue> pair : valores.entrySet()) {
+		    System.out.print(pair.getKey()+" : ");
+		    System.out.println(pair.getValue().version);
+		}
+		
+		
+		System.out.println(key);
 		KeyValue k = valores.remove(key);
 		if(k ==  null){
 			k = new KeyValue();
+			k.key = key;
 			k.version = -1;
 		}
-		return null;
+		return k;
 	}
 
 	// Caso a chave exista no banco, com chave igual ao parâmetro version
