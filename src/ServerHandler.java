@@ -21,7 +21,7 @@ public class ServerHandler implements Iface {
 	public KeyValue get(long key) throws TException {
 		// TODO Auto-generated method stub
 		KeyValue k;
-		if((k = valores.get(key)) == null){
+		if ((k = valores.get(key)) == null) {
 			k = new KeyValue();
 			k.version = -1;
 		}
@@ -33,9 +33,10 @@ public class ServerHandler implements Iface {
 	@Override
 	public List<KeyValue> getRange(long keyBegin, long keyEnd) throws TException {
 		// TODO Auto-generated method stub
-		ArrayList<KeyValue> lista  = new ArrayList<>();
+		ArrayList<KeyValue> lista = new ArrayList<>();
 		for (long i = keyBegin; i < keyEnd; i++) {
-			lista.add(valores.get(i));
+			if(valores.containsKey(i))
+				lista.add(valores.get(i));
 		}
 		return lista;
 	}
@@ -46,10 +47,10 @@ public class ServerHandler implements Iface {
 	@Override
 	public int put(long key, ByteBuffer value) throws ValueIsTooLongException, TException {
 		// TODO Auto-generated method stub
-		
+
 		KeyValue k;
 		if ((k = valores.get(key)) != null) {
-			k.setVersion(k.getVersion() + 1);
+			k.setVersion(k.getVersion());
 			k.setValue(value);
 		} else {
 			k = new KeyValue();
@@ -69,10 +70,10 @@ public class ServerHandler implements Iface {
 	public int update(long key, ByteBuffer value) throws ValueIsTooLongException, TException {
 		// TODO Auto-generated method stub
 		KeyValue k;
-		if((k = valores.get(key))!= null){
+		if ((k = valores.get(key)) != null) {
 			k.value = value;
 			k.version++;
-		}else{
+		} else {
 			return -1;
 		}
 		return k.version;
@@ -84,8 +85,16 @@ public class ServerHandler implements Iface {
 	@Override
 	public int updateWithVersion(long key, ByteBuffer value, int version) throws ValueIsTooLongException, TException {
 		// TODO Auto-generated method stub
-		
-		return 0;
+
+		KeyValue k;
+
+		if ((k = valores.get(key)) != null && k.version == version) {
+			k.value = value;
+			k.version++;
+		} else
+			return -1;
+
+		return k.version;
 	}
 
 	// Caso a chave exista no banco, remove o par e o retorna
@@ -93,18 +102,15 @@ public class ServerHandler implements Iface {
 	@Override
 	public KeyValue remove(long key) throws TException {
 		// TODO Auto-generated method stub
-		
-		
-		
+
 		for (Map.Entry<Long, KeyValue> pair : valores.entrySet()) {
-		    System.out.print(pair.getKey()+" : ");
-		    System.out.println(pair.getValue().version);
+			System.out.print(pair.getKey() + " : ");
+			System.out.println(pair.getValue().version);
 		}
-		
-		
+
 		System.out.println(key);
 		KeyValue k = valores.remove(key);
-		if(k ==  null){
+		if (k == null) {
 			k = new KeyValue();
 			k.key = key;
 			k.version = -1;
@@ -118,11 +124,23 @@ public class ServerHandler implements Iface {
 	@Override
 	public KeyValue removeWithVersion(long key, int version) throws TException {
 		// TODO Auto-generated method stub
-		KeyValue k = valores.get(key);
-		if(k.version == version)
+		System.out.println("chaves no banco: ");
+		for (Map.Entry<Long, KeyValue> pair : valores.entrySet()) {
+			System.out.print(pair.getKey() + " : ");
+			System.out.println(pair.getValue().version);
+		}
+
+		System.out.println(key+" - "+version);
+		KeyValue k;
+
+		if (((k = valores.get(key)) != null) && (k.version == version)) { 
 			valores.remove(key);
-		
+		} else
+			return null;
+
+		System.out.println("retornando k");
 		return k;
+
 	}
 
 }
