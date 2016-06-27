@@ -13,17 +13,13 @@ import java.util.*;
 
 import lamedb.*;
 
-
 public class Dispatcher {
 
-
 	TTransport transport;
-    
-    
-    TProtocol protocol;
-    LameDB.Client client;
-    
-	
+
+	TProtocol protocol;
+	LameDB.Client client;
+
 	int porta;
 	String host;
 
@@ -33,40 +29,38 @@ public class Dispatcher {
 		this.host = ip;
 		try {
 			transport.open();
-			protocol = new  TBinaryProtocol(transport);
+			protocol = new TBinaryProtocol(transport);
 			client = new LameDB.Client(protocol);
 		} catch (TTransportException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
-	
-	public void fecharConexao(){
+
+	public void fecharConexao() {
 		transport.close();
 	}
+
 	public KeyValue get(long key) throws TException {
 
 		return client.get(key);
-		
 
 	}
 
 	public List<KeyValue> getRange(long start, long end) throws TException {
-		
+
 		return client.getRange(start, end);
-		
+
 	}
 
 	public int put(long key, ByteBuffer value) throws TException {
-		int r=0;
-		
-        r = client.put(key, value);
-        transport.close();    
-		
+		int r = 0;
+
+		r = client.put(key, value);
+		transport.close();
+
 		return r;
-		
-		
+
 	}
 
 	public int update(long key, ByteBuffer value) throws TException {
@@ -88,5 +82,4 @@ public class Dispatcher {
 
 	}
 
-	
 }

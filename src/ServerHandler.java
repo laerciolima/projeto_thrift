@@ -207,7 +207,8 @@ public class ServerHandler implements Iface {
 		return k;
 
 	}
-
+	
+	//get range ainda falta implementar a faixa de mais de um nó
 	public long getRange(int id) {
 		for (No no : nodes) {
 			if (no.getId() == id)
@@ -217,7 +218,8 @@ public class ServerHandler implements Iface {
 		return -1;
 
 	}
-
+	
+	//essa mizera dessa função ainda falta implementar a modularização
 	public No tratarRequisicao(long key) {
 		for (No no : nodes) {
 			if (key < no.getLimite()) {
