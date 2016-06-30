@@ -23,10 +23,11 @@ public class ServerHandler implements Iface {
 	private long limite;
 	private TreeSet<No> nodes;
 
-	public ServerHandler(long limite, TreeSet<No> nodes) {
+	public ServerHandler(long limite, TreeSet<No> nodes, ConcurrentHashMap<Long, KeyValue> valores) {
 		super();
 		this.limite = limite;
 		this.nodes = nodes;
+		this.valores = valores;
 	}
 
 	// Retorna KeyValue com versão -1, caso chave não esteja no banco.
@@ -34,13 +35,12 @@ public class ServerHandler implements Iface {
 	@Override
 	public KeyValue get(long key) throws TException {
 		// TODO Auto-generated method stub
-		System.out.println("meu limte: "+limite);
+		System.out.println("meu limte: " + limite);
 		for (Map.Entry<Long, KeyValue> pair : valores.entrySet()) {
 			System.out.print(pair.getKey() + " : ");
 			System.out.println(pair.getValue().version);
 		}
-		
-		
+
 		No n = tratarRequisicao(key);
 		if (n != null) {
 			Dispatcher d = new Dispatcher(n.getIp(), n.getPorta());
@@ -60,20 +60,45 @@ public class ServerHandler implements Iface {
 	// Caso não existam chaves na faixa, a lista é vazia.
 	@Override
 	public List<KeyValue> getRange(long keyBegin, long keyEnd) throws TException {
-
-		No n = tratarRequisicao(keyBegin);
-		if (n != null) {
-			Dispatcher d = new Dispatcher(n.getIp(), n.getPorta());
-
-			return d.getRange(keyBegin, keyEnd);
-		}
-
+		System.out.println("aquiii");
+		No n;
 		ArrayList<KeyValue> lista = new ArrayList<>();
-		for (long i = keyBegin; i < keyEnd; i++) {
-			if (valores.containsKey(i))
-				lista.add(valores.get(i));
+		
+		while ((n = tratarRequisicao(keyBegin)) != null) {
+			
+			Dispatcher d = new Dispatcher(n.getIp(), n.getPorta());
+			lista.addAll(d.getRange(keyBegin, n.getLimite()));
+			if (keyEnd > n.getLimite()){
+				keyBegin = n.getLimite();
+				d.fecharConexao();
+			}else {
+				return lista;
+			}
+
 		}
+
+		for (long i = keyBegin; i <= keyEnd; i++) {
+			if (valores.containsKey(i)){
+				lista.add(valores.get(i));
+			}
+		}
+		
+		if(limite < keyEnd){
+			keyBegin = limite;
+			while ((n = tratarRequisicao(keyBegin)) != null) {
+				Dispatcher d = new Dispatcher(n.getIp(), n.getPorta());
+				lista.addAll(d.getRange(keyBegin, keyEnd));
+				if (keyEnd > n.getLimite())
+					keyBegin = n.getLimite();
+				else {
+					break;
+				}
+
+			}
+		}
+
 		return lista;
+
 	}
 
 	// Caso a chave não exista no banco, insere par com version_t = 0 e retorna
@@ -85,19 +110,14 @@ public class ServerHandler implements Iface {
 		int r = 0;
 		No n = tratarRequisicao(key);
 		if (n != null) {
-			
-			
-			
-			
-			
+
 			Dispatcher d = new Dispatcher(n.getIp(), n.getPorta());
 			System.out.print("dispatcher criado: ");
-			System.out.println(d.put(key, value)); 
+			return d.put(key, value);
 		}
 
-		
 		System.out.println("continuando");
-		
+
 		KeyValue k;
 		if ((k = valores.get(key)) != null) {
 			k.setVersion(k.getVersion());
@@ -207,31 +227,30 @@ public class ServerHandler implements Iface {
 		return k;
 
 	}
-	
-	//get range ainda falta implementar a faixa de mais de um nó
-	public long getRange(int id) {
-		for (No no : nodes) {
-			if (no.getId() == id)
-				return no.getLimite();
-		}
 
-		return -1;
 
-	}
-	
-	//essa mizera dessa função ainda falta implementar a modularização
+	// essa mizera dessa função ainda falta implementar a modularização
 	public No tratarRequisicao(long key) {
+		
+		ZkConnect conn = new ZkConnect("localhost", 2181);
+		nodes = conn.getNodes("/nodes");
+		
+		
 		for (No no : nodes) {
 			if (key < no.getLimite()) {
 
 				if (no.getLimite() == limite)
+
 					break; // proprio no
-				
-				System.out.println("Despachando para:"+no.getId());
+
+				System.out.println("Despachando para:" + no.getId());
 
 				return no;
 			}
 		}
+		if (nodes.last().getLimite() < key && nodes.first().getLimite() != limite)
+			return nodes.first();
+
 		return null;
 	}
 
