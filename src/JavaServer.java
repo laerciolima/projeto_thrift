@@ -61,11 +61,12 @@ public class JavaServer {
 			ZkConnect conn = new ZkConnect("127.0.0.1", 2181);
 
 			nodes = conn.getNodes(DIR);
-
+			
 			// varrer os nos a procura da maior faixa;
+			
 			ConcurrentHashMap<Long, KeyValue> valores = new ConcurrentHashMap<>();
 			if (nodes.isEmpty()) {
-				conn.createNode(DIR + "/node" + id, (id + " localhost " + (6500 + id) + " " + Long.MAX_VALUE + "").getBytes());
+				conn.createNode(DIR + "/node" + id, (id + " localhost " + (6500 + id) + " " + (1000) + "").getBytes());
 			} else {
 				long maior_faixa = 0;
 				long limite_anterior = 0;
@@ -78,7 +79,7 @@ public class JavaServer {
 					limite_anterior = no.getLimite();
 
 				}
-
+				System.out.println(no_aux.getIp()+ " - "+no_aux.getPorta()+ " - "+(no_aux.getLimite() - maior_faixa)+ " - "+(no_aux.getLimite() - (maior_faixa / 2)));
 				List<KeyValue> elems = new Dispatcher(no_aux.getIp(), no_aux.getPorta())
 						.getRange((no_aux.getLimite() - (maior_faixa)), no_aux.getLimite() - (maior_faixa / 2));
 

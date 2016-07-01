@@ -22,6 +22,7 @@ public class ServerHandler implements Iface {
 	private ConcurrentHashMap<Long, KeyValue> valores = new ConcurrentHashMap<>();
 	private long limite;
 	private TreeSet<No> nodes;
+	ZkConnect conn = new ZkConnect("localhost", 2181);
 
 	public ServerHandler(long limite, TreeSet<No> nodes, ConcurrentHashMap<Long, KeyValue> valores) {
 		super();
@@ -229,10 +230,9 @@ public class ServerHandler implements Iface {
 	}
 
 
-	// essa mizera dessa função ainda falta implementar a modularização
 	public No tratarRequisicao(long key) {
 		
-		ZkConnect conn = new ZkConnect("localhost", 2181);
+		
 		nodes = conn.getNodes("/nodes");
 		
 		
